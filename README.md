@@ -147,9 +147,76 @@ VoiceType/
 
 Six source files. No dependencies. No Xcode project needed (though it opens in Xcode fine).
 
+## Developing with an LLM
+
+This project was built entirely with Claude Code in a single session. If you want to extend it, paste this prompt to get your LLM up to speed:
+
+<details>
+<summary>Click to expand LLM bootstrap prompt</summary>
+
+```
+You're working on VoiceType, a native macOS menu bar app (Swift, SwiftUI, SPM).
+The user holds Ctrl+Shift to record from their mic, releases to transcribe via
+Groq Whisper API, and the text is typed into the focused field via CGEvent
+keystroke injection.
+
+PROJECT STRUCTURE:
+- Package.swift: SPM manifest, macOS 14+, no external dependencies
+- Sources/VoiceTypeApp.swift: @main App with MenuBarExtra, AppState class
+  coordinates recording/transcription/typing lifecycle
+- Sources/AudioRecorder.swift: AVAudioEngine capture with CoreAudio device
+  selection, 16kHz mono PCM, WAV encoding
+- Sources/GroqTranscriber.swift: multipart POST to Groq Whisper API, API key
+  stored at ~/.config/voicetype/api-key (plain file, 0600 permissions)
+- Sources/KeyboardInjector.swift: CGEvent Unicode keystroke injection
+- Sources/HotkeyManager.swift: global Ctrl+Shift detection via CGEvent tap
+  on flagsChanged events
+- Sources/SettingsView.swift: SwiftUI settings in a manually-created NSWindow
+  (not Settings scene, which is broken for MenuBarExtra apps)
+- bundle.sh: builds release, creates .app bundle, signs with "VoiceType Dev"
+  certificate, copies to /Applications
+
+KEY ARCHITECTURE DECISIONS (learned the hard way):
+1. AVAudioEngine is persistent (created once, reused). Creating a new engine per
+   recording corrupts the audio unit device binding after 2-4 cycles (OSStatus
+   1852797029). The engine stays alive; each recording just toggles tap + start/stop.
+2. CGEvent taps get silently disabled by macOS on timeout. The callback checks for
+   tapDisabledByTimeout and re-enables the tap automatically.
+3. SettingsLink and the Settings scene don't work in MenuBarExtra + LSUIElement apps.
+   Settings window is a plain NSWindow with NSHostingView.
+4. API key is a dotfile, not Keychain. Keychain causes password prompts on every
+   launch for self-signed apps, and the login keychain doesn't support Touch ID.
+5. App must be a signed .app bundle (not bare executable) to appear in macOS
+   permission panels. bundle.sh handles this.
+6. Code signing uses a self-signed "VoiceType Dev" certificate so permissions
+   survive rebuilds. Ad-hoc signing resets permissions every time.
+7. stopRecording() must: remove tap, stop engine, reset converter (in that order).
+   Skipping any step causes coreaudiod to spin at 70% CPU.
+
+PERMISSIONS REQUIRED:
+- Microphone (requested via AVCaptureDevice.requestAccess at launch)
+- Input Monitoring (for CGEvent tap global hotkey)
+- Accessibility (for CGEvent keystroke injection)
+
+BUILD & TEST:
+- swift build (debug) or ./bundle.sh (release + install to /Applications)
+- Run from terminal for logs: /Applications/VoiceType.app/Contents/MacOS/VoiceType
+- All log lines prefixed with [VoiceType]
+
+GROQ API:
+- Endpoint: POST https://api.groq.com/openai/v1/audio/transcriptions
+- Model: whisper-large-v3
+- Multipart form: file (WAV), model, language (en), prompt (punctuation hint)
+- Reads API key from GROQ_API_KEY env var or ~/.config/voicetype/api-key
+```
+
+</details>
+
+See [BUILDING.md](BUILDING.md) for the 9 platform issues we hit and how we solved them.
+
 ## Credits
 
-Built with Claude Code. Whisper transcription by [Groq](https://groq.com).
+Built with [Claude Code](https://claude.ai/code). Whisper transcription by [Groq](https://groq.com).
 
 ## License
 

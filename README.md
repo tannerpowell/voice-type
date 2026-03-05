@@ -20,7 +20,21 @@ The whole cycle takes about 1 second. It works in any app: your browser, your ed
 - A microphone (built-in works, USB mic like the BOYA CM40 works better)
 - A [Groq API key](https://console.groq.com/keys) (free to create, generous free tier)
 
-## Setup
+## Quick Install (pre-built app)
+
+If someone shared `VoiceType.zip` with you:
+
+1. Unzip it, drag `VoiceType.app` to `/Applications`
+2. **Right-click** the app > **Open** > click **Open** in the dialog (first time only, bypasses Gatekeeper)
+3. Click the mic icon in your menu bar > **Settings** > paste your [Groq API key](https://console.groq.com/keys)
+4. Grant permissions when prompted (Microphone auto-prompts; add the app manually for Input Monitoring and Accessibility in System Settings > Privacy & Security)
+5. Hold **Ctrl+Shift** to record, release to transcribe
+
+That's it. Total time: ~2 minutes.
+
+---
+
+## Build from Source
 
 ### 1. Get a Groq API key (~30 seconds)
 

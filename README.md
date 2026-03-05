@@ -22,24 +22,21 @@ The whole cycle takes about 1 second. It works in any app: your browser, your ed
 
 ## Setup
 
-### 1. Get a Groq API key
+### 1. Get a Groq API key (~30 seconds)
 
-Head to [console.groq.com/keys](https://console.groq.com/keys), sign up, and create an API key. It takes about 30 seconds. Groq runs Whisper Large V3 on custom hardware, so transcription is fast and the free tier handles casual use easily.
+Head to [console.groq.com/keys](https://console.groq.com/keys), sign up, and create an API key. Groq runs Whisper Large V3 on custom hardware, so transcription is fast and the free tier handles casual use easily.
 
-### 2. Build VoiceType
+### 2. Clone and build (~1 minute)
 
 ```bash
 git clone https://github.com/tannerpowell/voice-type.git
 cd voice-type/VoiceType
-```
-
-First build (one time):
-
-```bash
 swift build -c release
 ```
 
-### 3. Create a code signing certificate
+First build takes about 50 seconds. Subsequent builds are near-instant.
+
+### 3. Create a code signing certificate (~2 minutes, one time)
 
 macOS requires a signed app bundle for microphone, accessibility, and input monitoring permissions. You only do this once.
 
@@ -65,7 +62,7 @@ Then trust it for code signing:
 3. Set **Code Signing** to **Always Trust**
 4. Close (enter your password when prompted)
 
-### 4. Bundle and install
+### 4. Bundle and install (~10 seconds)
 
 ```bash
 chmod +x bundle.sh
@@ -74,7 +71,7 @@ chmod +x bundle.sh
 
 This builds a release binary, wraps it in a `.app` bundle, signs it with your certificate, and copies it to `/Applications`.
 
-### 5. Grant permissions
+### 5. Grant permissions (~1 minute, one time)
 
 Launch VoiceType:
 
@@ -92,7 +89,7 @@ Then grant three permissions in **System Settings > Privacy & Security**:
 | **Input Monitoring** | Detect Ctrl+Shift globally | Add VoiceType.app manually via the + button |
 | **Accessibility** | Type text into focused fields | Add VoiceType.app manually via the + button |
 
-You may need to quit and relaunch after granting permissions.
+You may need to quit and relaunch after granting permissions. Because the app uses a stable code signing certificate, these permissions survive rebuilds.
 
 ### 6. Use it
 
@@ -100,7 +97,7 @@ You may need to quit and relaunch after granting permissions.
 - **Release** to transcribe (icon turns orange briefly)
 - Text appears in whatever field has focus
 
-That's it. Works in every app on your Mac.
+That's it. Total setup time: about 5 minutes. Works in every app on your Mac.
 
 ## Menu bar states
 

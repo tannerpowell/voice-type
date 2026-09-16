@@ -4,28 +4,33 @@
 # boundary; `git add -f` can't sneak past it.
 #
 # Fails only on files ADDED in the PR (existing tracked files are
-# grandfathered). If a binary is genuinely needed in git, update this
-# workflow — that edit is the conscious override.
+# grandfathered, including renames between Office paths). If a binary is
+# genuinely needed in git, update this workflow — that edit is the conscious
+# override.
 name: no-new-binaries
 
 on:
   pull_request:
-    paths:
-      - "**.docx"
-      - "**.xlsx"
 
 jobs:
   block:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 as of 2026-09-16
         with:
           fetch-depth: 0
       - name: Fail on newly added Office binaries
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          added=$(git diff --name-only --diff-filter=A "origin/${BASE_REF}...HEAD" -- '*.docx' '*.xlsx')
+          added=$(
+            git diff --name-status --diff-filter=ACR -M -C "origin/${BASE_REF}...HEAD" -- \
+              '*.[dD][oO][cC][xX]' '**/*.[dD][oO][cC][xX]' \
+              '*.[xX][lL][sS][xX]' '**/*.[xX][lL][sS][xX]' |
+            awk -F '\t' '$1 == "A" || $1 ~ /^C/ || ($1 ~ /^R/ && $2 !~ /\.[dD][oO][cC][xX]$|\.[xX][lL][sS][xX]$/) { print $NF }'
+          )
           if [ -n "$added" ]; then
             echo "::error::New .docx/.xlsx files are not allowed in git (unscannable for secrets/PII). Keep them local and gitignored."
             echo "$added"

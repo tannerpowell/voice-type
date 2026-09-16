@@ -22,8 +22,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: Fail on newly added Office binaries
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          added=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" -- '*.docx' '*.xlsx')
+          added=$(git diff --name-only --diff-filter=A "origin/${BASE_REF}...HEAD" -- '*.docx' '*.xlsx')
           if [ -n "$added" ]; then
             echo "::error::New .docx/.xlsx files are not allowed in git (unscannable for secrets/PII). Keep them local and gitignored."
             echo "$added"

@@ -1,0 +1,32 @@
+# Block NEW Office binaries — they hide secrets and PII from content
+# scanners (gitleaks can't see inside .docx/.xlsx), so they're treated like
+# credentials: local-only and gitignored. This check is the server-side
+# boundary; `git add -f` can't sneak past it.
+#
+# Fails only on files ADDED in the PR (existing tracked files are
+# grandfathered). If a binary is genuinely needed in git, update this
+# workflow — that edit is the conscious override.
+name: no-new-binaries
+
+on:
+  pull_request:
+    paths:
+      - "**.docx"
+      - "**.xlsx"
+
+jobs:
+  block:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fail on newly added Office binaries
+        run: |
+          added=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" -- '*.docx' '*.xlsx')
+          if [ -n "$added" ]; then
+            echo "::error::New .docx/.xlsx files are not allowed in git (unscannable for secrets/PII). Keep them local and gitignored."
+            echo "$added"
+            exit 1
+          fi
+          echo "No new Office binaries. Clean."
